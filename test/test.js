@@ -2,6 +2,8 @@
 
 "use strict";
 
+var jsonData = {};
+
 var contours = [];
 var bounds = [10000000,10000000,-10000000,-10000000];
 var offset = [0, 0];
@@ -406,42 +408,70 @@ $(document).ready(function() {
 	$("#preset").empty().append($('<option>', {
 		text: "--Empty--"
 	}));
-	$.ajax({
-		url: "data/index.json",
-		dataType: "json",
-		success: function(data) {
-			var options = [];
-			data.forEach(function(group) {
-				group.files.filter(function(file) {
-					return file.name; // && file.content;
-				}).forEach(function(file) {
-					options.push($('<option>', {
-						value: file.name,
-						text: (file.content || file.name)
-					}).data("file", file));
-				});
-			});
-			// Sort before adding
-			options.sort(function(a,b) {
-				return $(a).text().localeCompare($(b).text());
-			}).forEach(function(option) {
-				$("#preset").append(option);
-			});
-			// Load some default data
-			$("#preset option[value='glu_winding.dat']").attr("selected", "selected");
-			$("#preset").change();
-		}
-	});
+	
+  // load json data
+  $.ajax({
+    url: "data.json",
+    dataType: "json",
+    success: function(data) {
+      var nItems = 0;
+      for (var key in data) {
+        if (data.hasOwnProperty(key)) nItems++;
+      }
+      console.log("jsonData loaded (" + nItems + " items)");
+      jsonData = data;
+      loadIndex();
+    }
+  });
+  
+  function loadIndex() {
+    $.ajax({
+      url: "data/index.json",
+      dataType: "json",
+      success: function(data) {
+        var options = [];
+        data.forEach(function(group) {
+          group.files.filter(function(file) {
+            return file.name; // && file.content;
+          }).forEach(function(file) {
+            options.push($('<option>', {
+              value: file.name,
+              text: (file.content || file.name)
+            }).data("file", file));
+          });
+        });
+        // Sort before adding
+        options.sort(function(a,b) {
+          return $(a).text().localeCompare($(b).text());
+        }).forEach(function(option) {
+          $("#preset").append(option);
+        });
+        // Load some default data
+        $("#preset option[value='glu_winding.dat']").attr("selected", "selected");
+        $("#preset").change();
+      }
+    });
+  }
+  
 	$("#preset").change(function() {
 		var file = $("#preset option:selected").data("file") || {};
 		function load(filename, next) {
 			if (filename) {
-				$.ajax({
-					url: "data/" + filename,
-					success: function(data) {
-						if (next) next(data);
-					}
-				});
+				//$.ajax({
+				//	url: "data/" + filename,
+				//	dataType: "text",
+				//	success: function(data) {
+				//		if (next) next(data);
+				//	}
+				//});
+        var data = null;
+        filename = "data/" + filename;
+        if (!jsonData) console.log("  NO JSON DATA LOADED");
+        if (jsonData.hasOwnProperty(filename)) data = jsonData[filename];
+        console.log("  " + filename + ":", data ? "ok" : "null");
+        if (data && next) {
+          next(data);
+        }
 			} else {
 				if (next) next("");
 			}
