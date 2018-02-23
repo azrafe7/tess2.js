@@ -303,7 +303,6 @@ function draw() {
 		}
 	}
 
-
 	if ($("#draw_bounds").attr('checked')) {
 
 		// Bounds
@@ -345,6 +344,9 @@ function draw() {
 
 	}
 
+  // Flip Y
+	$canvas.toggleClass("flipY", $("#flip_y").attr('checked'));
+
 	// highlight errors, if any
 /*	if (error_points) {
 		ctx.lineWidth = 4 * linescale;
@@ -385,6 +387,10 @@ $(document).ready(function() {
 	});
 
 	$("#draw_input_polys").change(function() {
+		draw();
+	});
+
+	$("#flip_y").change(function() {
 		draw();
 	});
 
@@ -512,6 +518,7 @@ $(document).ready(function() {
 		if ( panning ) {
 			var dx = smouse[0] - event.clientX;
 			var dy = smouse[1] - event.clientY;
+      if ($('#flip_y').attr('checked')) dy *= -1;
 			offset[0] = soffset[0] + dx/scale;
 			offset[1] = soffset[1] + dy/-scale;
 			draw();

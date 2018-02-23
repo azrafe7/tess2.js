@@ -54,6 +54,10 @@
 	            color: #777;
 	        }
 
+          .flipY {
+            transform: scaleY(-1);
+          }
+          
 	    </style>
 		<script src="test.js"></script>
 	</head>
@@ -71,6 +75,9 @@
 	                <br/>
 	                <input id="draw_bounds" type="checkbox" value="drawBounds" checked="checked">
 	                <label for="draw_bounds">Draw bounds</label> 
+	                <br/>
+	                <input id="flip_y" type="checkbox" value="flipY">
+	                <label for="flip_y">Flip Y</label> 
 	            </div>
 <!--	            <div class="wrapper">
 	                <label for="poly_contour">Contour of the polygon (any separator between coordinates):</label>
