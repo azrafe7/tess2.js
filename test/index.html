@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <script src="../build/tess2.js"></script>
   <script src="jquery.js"></script>
+  <script src="hxGeomAlgo.js"></script>
     <style type="text/css" media="screen">
       html, body {
         height: 100%;
@@ -78,6 +79,9 @@
           <br/>
           <input id="flip_y" type="checkbox" value="flipY">
           <label for="flip_y">Flip Y</label> 
+          <br/>
+          <input id="hxgeomalgo" type="checkbox" value="hxGeomAlgo">
+          <label for="hxgeomalgo">Use hxGeomAlgo.Tess2</label> 
         </div>
 <!--        <div class="wrapper">
           <label for="poly_contour">Contour of the polygon (any separator between coordinates):</label>
@@ -123,7 +127,7 @@
 
         <div class="wrapper">
           <br><span class="info"><span id="triangles_size">0</span> triangles computed.</span>
-          <br><span class="info">Build in <span id="tess_time">0</span> ms</span>
+          <br><span class="info">Built in <span id="tess_time">0</span> ms</span>
         </div>
 
 <!--        <div class="wrapper">

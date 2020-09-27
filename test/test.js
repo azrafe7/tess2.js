@@ -152,13 +152,25 @@ function triangulate() {
     case '16': polygonSize = 16; break;
   }
 
-  tess = Tess2.tesselate({
-    contours: contours,
-    windingRule: windingRule, //Tess2.WINDING_ODD,
-    elementType: elementType, //Tess2.POLYGONS,
-    polySize: polygonSize, //3,
-    vertexSize: 2
-  });
+  if ($("#hxgeomalgo").attr('checked')) {
+    console.log("Using hxGeomAlgo.Tess2...");
+    tess = hxGeomAlgo.Tess2.tesselate(
+      contours,
+      hxGeomAlgo.WindingRule.__empty_constructs__[windingRule], //Tess2.WINDING_ODD,
+      hxGeomAlgo.ResultType.__empty_constructs__[elementType], //Tess2.POLYGONS,
+      polygonSize, //3,
+      2
+    );
+  } else {
+    console.log("Using tess2.js...");
+    tess = Tess2.tesselate({
+      contours: contours,
+      windingRule: windingRule, //Tess2.WINDING_ODD,
+      elementType: elementType, //Tess2.POLYGONS,
+      polySize: polygonSize, //3,
+      vertexSize: 2
+    });
+  }
 
   var t1 = window.performance.now();
 
@@ -394,6 +406,11 @@ $(document).ready(function() {
     draw();
   });
 
+  $("#hxgeomalgo").change(function() {
+    triangulate();
+    draw();
+  });
+
   $("#winding_rule").change(function() {
     triangulate();
     draw();
@@ -414,7 +431,7 @@ $(document).ready(function() {
   $("#preset").empty().append($('<option>', {
     text: "--Empty--"
   }));
-  
+
   // load json data
   $.ajax({
     url: "data.json",
@@ -429,7 +446,7 @@ $(document).ready(function() {
       loadIndex();
     }
   });
-  
+
   function loadIndex() {
     $.ajax({
       url: "data/index.json",
@@ -458,7 +475,7 @@ $(document).ready(function() {
       }
     });
   }
-  
+
   $("#preset").change(function() {
     var file = $("#preset option:selected").data("file") || {};
     function load(filename, next) {
