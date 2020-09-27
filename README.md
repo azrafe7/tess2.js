@@ -2,6 +2,7 @@ This fork just adds a few things to the test page (no changes have been made to 
  
  - refactored to be rawgit-friendly ([test page](https://rawgit.com/azrafe7/tess2.js/master/test/index.html))
  - add flip y option
+ - add hxGeomAlgo.Tess2 option
 
 **Original README follows:**
 
