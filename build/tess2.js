@@ -1,4 +1,4 @@
-!function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Tess2=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Tess2 = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 module.exports = require('./src/tess2');
 },{"./src/tess2":2}],2:[function(require,module,exports){
 /*
@@ -38,6 +38,7 @@ module.exports = require('./src/tess2');
 	/* Public API */
 
 	var Tess2 = {};
+	var Geom = {};
 
 	module.exports = Tess2;
 	
@@ -910,8 +911,6 @@ module.exports = require('./src/tess2');
 
 	};
 
-	var Geom = {};
-
 	Geom.vertEq = function(u,v) {
 		return (u.s === v.s && u.t === v.t);
 	};
@@ -1056,7 +1055,7 @@ module.exports = require('./src/tess2');
 	* even when a and b differ greatly in magnitude.
 	*/
 	Geom.interpolate = function(a,x,b,y) {
-		return (a = (a < 0) ? 0 : a, b = (b < 0) ? 0 : b, ((a <= b) ? ((b == 0) ? ((x+y) / 2) : (x + (y-x) * (a/(a+b)))) : (y + (x-y) * (b/(a+b)))));
+		return (a = (a < 0) ? 0 : a, b = (b < 0) ? 0 : b, ((a <= b) ? ((b === 0) ? ((x+y) / 2) : (x + (y-x) * (a/(a+b)))) : (y + (x-y) * (b/(a+b)))));
 	};
 
 	/*
@@ -1221,12 +1220,14 @@ module.exports = require('./src/tess2');
 
 		this.nodes = [];
 		this.nodes.length = size+1;
-		for (var i = 0; i < this.nodes.length; i++)
+		var i;
+		
+		for (i = 0; i < this.nodes.length; i++)
 			this.nodes[i] = new PQnode();
 
 		this.handles = [];
 		this.handles.length = size+1;
-		for (var i = 0; i < this.handles.length; i++)
+		for (i = 0; i < this.handles.length; i++)
 			this.handles[i] = new PQhandleElem();
 
 		this.initialized = false;
@@ -1278,7 +1279,7 @@ module.exports = require('./src/tess2');
 			for( ;; ) {
 				parent = curr >> 1;
 				hParent = n[parent].handle;
-				if( parent == 0 || this.leq( h[hParent].key, h[hCurr].key )) {
+				if( parent === 0 || this.leq( h[hParent].key, h[hCurr].key )) {
 					n[curr].handle = hCurr;
 					h[hCurr].node = curr;
 					break;
@@ -1301,10 +1302,6 @@ module.exports = require('./src/tess2');
 			return this.handles[this.nodes[1].handle].key;
 		},
 
-		isEmpty: function() {
-			this.size === 0;
-		},
-
 		/* really pqHeapInsert */
 		/* returns INV_HANDLE iff out of memory */
 		//PQhandle pqHeapInsert( TESSalloc* alloc, PriorityQHeap *pq, PQkey keyNew )
@@ -1316,15 +1313,16 @@ module.exports = require('./src/tess2');
 			curr = ++this.size;
 			if( (curr*2) > this.max ) {
 				this.max *= 2;
+				var i;
 				var s;
 				s = this.nodes.length;
 				this.nodes.length = this.max+1;
-				for (var i = s; i < this.nodes.length; i++)
+				for (i = s; i < this.nodes.length; i++)
 					this.nodes[i] = new PQnode();
 
 				s = this.handles.length;
 				this.handles.length = this.max+1;
-				for (var i = s; i < this.handles.length; i++)
+				for (i = s; i < this.handles.length; i++)
 					this.handles[i] = new PQhandleElem();
 			}
 
@@ -1562,7 +1560,6 @@ module.exports = require('./src/tess2');
 	Sweep.topRightRegion = function( reg )
 	{
 		var dst = reg.eUp.Dst;
-		var reg = null;
 		/* Find the region above the uppermost edge with the same destination */
 		do {
 			reg = Sweep.regionAbove( reg );
@@ -1594,9 +1591,9 @@ module.exports = require('./src/tess2');
 	Sweep.isWindingInside = function( tess, n ) {
 		switch( tess.windingRule ) {
 			case Tess2.WINDING_ODD:
-				return (n & 1) != 0;
+				return (n & 1) !== 0;
 			case Tess2.WINDING_NONZERO:
-				return (n != 0);
+				return (n !== 0);
 			case Tess2.WINDING_POSITIVE:
 				return (n > 0);
 			case Tess2.WINDING_NEGATIVE:
@@ -1999,7 +1996,7 @@ module.exports = require('./src/tess2');
 				eUp = Sweep.regionBelow(regUp).eUp;
 				Sweep.finishLeftRegions( tess, Sweep.regionBelow(regUp), regLo );
 				Sweep.addRightEdges( tess, regUp, eUp.Oprev, eUp, eUp, true );
-				return TRUE;
+				return true;
 			}
 			if( dstUp === tess.event ) {
 				/* Splice dstUp into eLo, and process the new region(s) */
@@ -2074,7 +2071,7 @@ module.exports = require('./src/tess2');
 			if( ! regUp.dirty ) {
 				regLo = regUp;
 				regUp = Sweep.regionAbove( regUp );
-				if( regUp == null || ! regUp.dirty ) {
+				if( regUp === null || ! regUp.dirty ) {
 					/* We've walked all the dirty regions */
 					return;
 				}
@@ -2374,7 +2371,7 @@ module.exports = require('./src/tess2');
 		var e = vEvent.anEdge;
 		while( e.activeRegion === null ) {
 			e = e.Onext;
-			if( e == vEvent.anEdge ) {
+			if( e === vEvent.anEdge ) {
 				/* All edges go right -- not incident to any processed edges */
 				Sweep.connectLeftVertex( tess, vEvent );
 				return;
@@ -2475,9 +2472,9 @@ module.exports = require('./src/tess2');
 			*/
 			if( ! reg.sentinel ) {
 				assert( reg.fixUpperEdge );
-				assert( ++fixedEdges == 1 );
+				assert( ++fixedEdges === 1 );
 			}
-			assert( reg.windingNumber == 0 );
+			assert( reg.windingNumber === 0 );
 			Sweep.deleteRegion( tess, reg );
 			/*    tessMeshDelete( reg->eUp );*/
 		}
@@ -2967,7 +2964,7 @@ module.exports = require('./src/tess2');
 					lo = lo.Lprev;
 				} else {
 					/* lo->Org is on the left.  We can make CCW triangles from up->Dst. */
-					while( lo.Lnext != up && (Geom.edgeGoesRight( up.Lprev )
+					while( lo.Lnext !== up && (Geom.edgeGoesRight( up.Lprev )
 						|| Geom.edgeSign( up.Dst, up.Org, up.Lprev.Org ) >= 0.0 )) {
 							var tempHalfEdge = mesh.connect( up, up.Lprev );
 							//if (tempHalfEdge == NULL) return 0;
@@ -3092,7 +3089,7 @@ module.exports = require('./src/tess2');
 				v.n = -1;
 
 			// Create unique IDs for all vertices and faces.
-			for ( f = mesh.fHead.next; f != mesh.fHead; f = f.next )
+			for ( f = mesh.fHead.next; f !== mesh.fHead; f = f.next )
 			{
 				f.n = -1;
 				if( !f.inside ) continue;
@@ -3119,7 +3116,7 @@ module.exports = require('./src/tess2');
 			}
 
 			this.elementCount = maxFaceCount;
-			if (elementType == Tess2.CONNECTED_POLYGONS)
+			if (elementType === Tess2.CONNECTED_POLYGONS)
 				maxFaceCount *= 2;
 	/*		tess.elements = (TESSindex*)tess->alloc.memalloc( tess->alloc.userData,
 															  sizeof(TESSindex) * maxFaceCount * polySize );
@@ -3156,7 +3153,7 @@ module.exports = require('./src/tess2');
 			// Output vertices.
 			for ( v = mesh.vHead.next; v !== mesh.vHead; v = v.next )
 			{
-				if ( v.n != -1 )
+				if ( v.n !== -1 )
 				{
 					// Store coordinate
 					var idx = v.n * vertexSize;
@@ -3191,7 +3188,7 @@ module.exports = require('./src/tess2');
 					this.elements[nel++] = -1;
 
 				// Store polygon connectivity
-				if ( elementType == Tess2.CONNECTED_POLYGONS )
+				if ( elementType === Tess2.CONNECTED_POLYGONS )
 				{
 					edge = f.anEdge;
 					do
@@ -3317,7 +3314,7 @@ module.exports = require('./src/tess2');
 
 			for( i = 0; i < vertices.length; i += size )
 			{
-				if( e == null ) {
+				if( e === null ) {
 					/* Make a self-loop (one vertex, one edge). */
 					e = this.mesh.makeEdge();
 	/*				if ( e == NULL ) {
@@ -3404,7 +3401,7 @@ module.exports = require('./src/tess2');
 			* except those which separate the interior from the exterior.
 			* Otherwise we tessellate all the regions marked "inside".
 			*/
-			if (elementType == Tess2.BOUNDARY_CONTOURS) {
+			if (elementType === Tess2.BOUNDARY_CONTOURS) {
 				this.setWindingNumber_( mesh, 1, true );
 			} else {
 				this.tessellateInterior_( mesh ); 
@@ -3413,7 +3410,7 @@ module.exports = require('./src/tess2');
 
 			mesh.check();
 
-			if (elementType == Tess2.BOUNDARY_CONTOURS) {
+			if (elementType === Tess2.BOUNDARY_CONTOURS) {
 				this.outputContours_( mesh, vertexSize );     /* output contours */
 			}
 			else
@@ -3426,5 +3423,6 @@ module.exports = require('./src/tess2');
 			return true;
 		}
 	};
+
 },{}]},{},[1])(1)
 });
