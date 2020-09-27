@@ -4,6 +4,7 @@
 
 var jsonData = {};
 
+var hxGeomAlgo_version = " (v" + hxGeomAlgo.Version.toString() + ")";
 var contours = [];
 var bounds = [10000000,10000000,-10000000,-10000000];
 var offset = [0, 0];
@@ -153,7 +154,7 @@ function triangulate() {
   }
 
   if ($("#hxgeomalgo").attr('checked')) {
-    console.log("Using hxGeomAlgo.Tess2...");
+    console.log("Using hxGeomAlgo.Tess2" + hxGeomAlgo_version + "...");
     tess = hxGeomAlgo.Tess2.tesselate(
       contours,
       hxGeomAlgo.WindingRule.__empty_constructs__[windingRule], //Tess2.WINDING_ODD,
@@ -377,6 +378,8 @@ $(window).resize(function() {
 });
 
 $(document).ready(function() {
+  console.log($("label[for='hxgeomalgo']").text($("label[for='hxgeomalgo']").text() + hxGeomAlgo_version));
+  
   var $canvas = $('#canvas');
   var ctx = $canvas[0].getContext('2d');
   ctx.canvas.width = $canvas.width();
