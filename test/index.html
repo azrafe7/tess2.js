@@ -82,6 +82,16 @@
           <br/>
           <input id="hxgeomalgo" type="checkbox" value="hxGeomAlgo">
           <label for="hxgeomalgo">Use hxGeomAlgo.Tess2</label> <a href="https://github.com/azrafe7/hxGeomAlgo">[github]</a>
+          <br/>
+          <input id="smooth_curves" type="checkbox" value="smooth_curves">
+          <label for="smooth_curves">Smooth curves</label>
+          <br/>
+          <span style="margin-left:3em">iterations: 
+            <form name="smooth_iterations_form">
+              <input type="range" id="smooth_iterations_input" value="3" min="0" max="8" oninput="smooth_iterations_output.value = smooth_iterations_input.value">
+              <output id="smooth_iterations_output">3</output>
+            </form>
+          </span>
         </div>
 <!--    <div class="wrapper">
           <label for="poly_contour">Contour of the polygon (any separator between coordinates):</label>
@@ -126,7 +136,7 @@
         </div>
 
         <div class="wrapper">
-          <br><span class="info"><span id="triangles_size">0</span> triangles computed.</span>
+          <br><span class="info"><span id="triangles_size">0 triangles computed.</span></span>
           <br><span class="info">Built in <span id="tess_time">0</span> ms</span>
         </div>
 

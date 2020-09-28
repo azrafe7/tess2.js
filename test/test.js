@@ -5,6 +5,9 @@
 var jsonData = {};
 
 var hxGeomAlgo_version = " (v" + hxGeomAlgo.Version.toString() + ")";
+var hxContours = [];
+var smoothedCurves = [];
+var closeSmoothedCurves = true;
 var contours = [];
 var bounds = [10000000,10000000,-10000000,-10000000];
 var offset = [0, 0];
@@ -153,7 +156,13 @@ function triangulate() {
     case '16': polygonSize = 16; break;
   }
 
-  if ($("#hxgeomalgo").attr('checked')) {
+  let smoothCurves = $("#smooth_curves").attr("checked");
+  if (smoothCurves) {  // smooth curves
+    console.log("Using hxGeomAlgo.Chaikin" + hxGeomAlgo_version + "...");
+    let smoothIterations = +$("#smooth_iterations_input").val();
+    hxContours = contours.map((c) => hxGeomAlgo.PolyTools.toPointArray(c));
+    smoothedCurves = hxContours.map((c) => hxGeomAlgo.Chaikin.smooth(c, smoothIterations, closeSmoothedCurves));
+  } else if ($("#hxgeomalgo").attr('checked')) {  // tesselate using hxGeomAlgo.Tess2
     console.log("Using hxGeomAlgo.Tess2" + hxGeomAlgo_version + "...");
     tess = hxGeomAlgo.Tess2.tesselate(
       contours,
@@ -162,7 +171,7 @@ function triangulate() {
       polygonSize, //3,
       2
     );
-  } else {
+  } else {  // tesselate using tess2.js
     console.log("Using tess2.js...");
     tess = Tess2.tesselate({
       contours: contours,
@@ -176,7 +185,13 @@ function triangulate() {
   var t1 = window.performance.now();
 
   $("#tess_time").text((t1-t0).toFixed(4));
-  $("#triangles_size").text(tess.elementCount);
+  if (tess !== null) {
+    $("#triangles_size").text(tess.elementCount + " triangles computed.");
+  }
+  if (smoothCurves) {
+    let numSmoothedPts = smoothedCurves.reduce((a,b) => a + b.length, 0);
+    $("#triangles_size").text(numSmoothedPts + " smoothed points computed.");
+  }
 }
 
 function draw() {
@@ -209,91 +224,111 @@ function draw() {
 //	ctx.strokeStyle = TRIANGLE_STROKE_STYLE;
   ctx.setLineDash([]);
 
+  let smoothCurves = $("#smooth_curves").attr("checked");
 
-  if (tess !== null) {
+  if (tess !== null || smooth_curves) {
 
     ctx.strokeStyle = "rgba(0,192,255, 0.6)";
     ctx.fillStyle = "rgba(0,192,255, 0.2)";
     ctx.lineWidth = linescale;
 
-    if (elementType === Tess2.POLYGONS) {
-      // Draw polygons
-      for (var i = 0; i < tess.elements.length; i += polygonSize) {
+    // draw smoothed curves
+    if (smoothCurves) {
+      for (var i = 0; i < smoothedCurves.length; i++) {
         ctx.beginPath();
-        for (var j = 0; j < polygonSize; j++) {
-          var idx = tess.elements[i+j];
-          if (idx == -1) continue;
+        let contour = smoothedCurves[i];
+        let contourSize = contour.length;
+        for (var j = 0; j < contourSize; j++) {
+          let pt = contour[j];
           if (j === 0)
-            ctx.moveTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
+            ctx.moveTo(pt.x, pt.y);
           else
-            ctx.lineTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
+            ctx.lineTo(pt.x, pt.y);
         }
         ctx.closePath();
         ctx.stroke();
         ctx.fill();
       }
-    }
-    if (elementType === Tess2.CONNECTED_POLYGONS) {
-      // Draw polygons
-      for (var i = 0; i < tess.elements.length; i += polygonSize*2) {
-        ctx.beginPath();
-        for (var j = 0; j < polygonSize; j++) {
-          var idx = tess.elements[i+j];
-          if (idx == -1) continue;
-          if (j === 0)
-            ctx.moveTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
-          else
-            ctx.lineTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
+    } else {
+      if (elementType === Tess2.POLYGONS) {
+        // Draw polygons
+        for (var i = 0; i < tess.elements.length; i += polygonSize) {
+          ctx.beginPath();
+          for (var j = 0; j < polygonSize; j++) {
+            var idx = tess.elements[i+j];
+            if (idx == -1) continue;
+            if (j === 0)
+              ctx.moveTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
+            else
+              ctx.lineTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          ctx.fill();
         }
-        ctx.closePath();
-        ctx.stroke();
-        ctx.fill();
       }
-      // Draw connections
-      ctx.strokeStyle = "rgba(0,0,0, 0.6)";
-      for (var i = 0; i < tess.elements.length; i += polygonSize*2) {
-        var ci = polyCenter(i, tess.elements, tess.vertices, polygonSize);
-        ctx.beginPath();
-        ctx.moveTo(ci[0]-linescale*3,ci[1]);
-        ctx.lineTo(ci[0]+linescale*3,ci[1]);
-        ctx.moveTo(ci[0],ci[1]-linescale*3);
-        ctx.lineTo(ci[0],ci[1]+linescale*3);
+      if (elementType === Tess2.CONNECTED_POLYGONS) {
+        // Draw polygons
+        for (var i = 0; i < tess.elements.length; i += polygonSize*2) {
+          ctx.beginPath();
+          for (var j = 0; j < polygonSize; j++) {
+            var idx = tess.elements[i+j];
+            if (idx == -1) continue;
+            if (j === 0)
+              ctx.moveTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
+            else
+              ctx.lineTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          ctx.fill();
+        }
+        // Draw connections
+        ctx.strokeStyle = "rgba(0,0,0, 0.6)";
+        for (var i = 0; i < tess.elements.length; i += polygonSize*2) {
+          var ci = polyCenter(i, tess.elements, tess.vertices, polygonSize);
+          ctx.beginPath();
+          ctx.moveTo(ci[0]-linescale*3,ci[1]);
+          ctx.lineTo(ci[0]+linescale*3,ci[1]);
+          ctx.moveTo(ci[0],ci[1]-linescale*3);
+          ctx.lineTo(ci[0],ci[1]+linescale*3);
 
-        for (var j = 0; j < polygonSize; j++) {
-          var idx = tess.elements[i+j]; // vertex id
-          var nei = tess.elements[i+j+polygonSize]; // element id
-          if (nei == -1) continue; // no neighbour, skip
-          if (nei < i/(polygonSize*2)) continue; // draw only in one direction
-          var nidx = ((j+1) == polygonSize || tess.elements[i+j+1] == -1) ? tess.elements[i+0] : tess.elements[i+j+1];
-          var cn = polyCenter(nei*polygonSize*2, tess.elements, tess.vertices, polygonSize);
-          var dx = cn[0] - ci[0];
-          var dy = cn[1] - ci[1];
-          ctx.moveTo(ci[0],ci[1]);
-          ctx.quadraticCurveTo(ci[0]+dx*0.5+dy*0.3,ci[1]+dy*0.5-dx*0.3, cn[0],cn[1]);
+          for (var j = 0; j < polygonSize; j++) {
+            var idx = tess.elements[i+j]; // vertex id
+            var nei = tess.elements[i+j+polygonSize]; // element id
+            if (nei == -1) continue; // no neighbour, skip
+            if (nei < i/(polygonSize*2)) continue; // draw only in one direction
+            var nidx = ((j+1) == polygonSize || tess.elements[i+j+1] == -1) ? tess.elements[i+0] : tess.elements[i+j+1];
+            var cn = polyCenter(nei*polygonSize*2, tess.elements, tess.vertices, polygonSize);
+            var dx = cn[0] - ci[0];
+            var dy = cn[1] - ci[1];
+            ctx.moveTo(ci[0],ci[1]);
+            ctx.quadraticCurveTo(ci[0]+dx*0.5+dy*0.3,ci[1]+dy*0.5-dx*0.3, cn[0],cn[1]);
+          }
+          ctx.stroke();
         }
-        ctx.stroke();
       }
-    }
-    if (elementType === Tess2.BOUNDARY_CONTOURS) {
-      // Draw polygons
-      for (var i = 0; i < tess.elements.length; i += 2) {
-        ctx.beginPath();
-        var start = tess.elements[i+0];
-        var count = tess.elements[i+1];
-        for (var j = 0; j < count; j++) {
-          var idx = start+j;
-          if (j === 0)
-            ctx.moveTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
-          else
-            ctx.lineTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
+      if (elementType === Tess2.BOUNDARY_CONTOURS) {
+        // Draw polygons
+        for (var i = 0; i < tess.elements.length; i += 2) {
+          ctx.beginPath();
+          var start = tess.elements[i+0];
+          var count = tess.elements[i+1];
+          for (var j = 0; j < count; j++) {
+            var idx = start+j;
+            if (j === 0)
+              ctx.moveTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
+            else
+              ctx.lineTo(tess.vertices[idx*2+0], tess.vertices[idx*2+1]);
+          }
+          ctx.closePath();
+          ctx.stroke();
+          ctx.fill();
         }
-        ctx.closePath();
-        ctx.stroke();
-        ctx.fill();
       }
     }
 
-    if (tess.mesh) {
+    if (tess && tess.mesh) {
       ctx.fillStyle = "rgba(0,192,255, 0.8)";
       var vHead = tess.mesh.vHead;
       for (var v = vHead.next; v !== vHead; v = v.next) {
@@ -379,7 +414,7 @@ $(window).resize(function() {
 
 $(document).ready(function() {
   console.log($("label[for='hxgeomalgo']").text($("label[for='hxgeomalgo']").text() + hxGeomAlgo_version));
-  
+
   var $canvas = $('#canvas');
   var ctx = $canvas[0].getContext('2d');
   ctx.canvas.width = $canvas.width();
@@ -412,6 +447,18 @@ $(document).ready(function() {
   $("#hxgeomalgo").change(function() {
     triangulate();
     draw();
+  });
+
+  $("#smooth_curves").change(function() {
+    triangulate();
+    draw();
+  });
+
+  $("#smooth_iterations_input").change(function() {
+    if ($("#smooth_curves").attr("checked")) {
+      triangulate();
+      draw();
+    }
   });
 
   $("#winding_rule").change(function() {
