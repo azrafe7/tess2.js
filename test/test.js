@@ -105,6 +105,13 @@ function polyCenter(off, elements, vertices, polygonSize) {
   return [cx/cn, cy/cn];
 }
 
+// convert 3D paths data as found in https://github.com/brendankenny/libtess.js
+// to a string format parseable by this script
+function convert3DPathsTo2DString(paths) {
+  let paths2D = paths.map((path) => path.filter((_, i) => (i + 1) % 3 != 0));
+  let paths2DString = JSON.stringify(paths2D).replaceAll("],", "],\n\n");
+  return paths2DString;
+}
 
 function triangulate() {
 
